@@ -30,10 +30,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import android.content.Intent
+import android.net.Uri
+import com.buildwclaude.dialer.core.CallPlacer
 import com.buildwclaude.dialer.core.DefaultDialerRole
 import com.buildwclaude.dialer.core.ui.theme.DesignType
 import com.buildwclaude.dialer.core.ui.theme.PhoneTheme
 import com.buildwclaude.dialer.core.ui.theme.palette
+import com.buildwclaude.dialer.ui.home.HomeScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -41,6 +45,7 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     @Inject lateinit var dialerRole: DefaultDialerRole
+    @Inject lateinit var callPlacer: CallPlacer
 
     private val roleLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -49,9 +54,18 @@ class MainActivity : ComponentActivity() {
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
 
+    private fun numberFromIntent(intent: Intent?): String {
+        val data: Uri? = intent?.data
+        return when {
+            data?.scheme == "tel" -> Uri.decode(data.schemeSpecificPart ?: "")
+            else -> ""
+        }.trim()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val prefill = numberFromIntent(intent)
         setContent {
             PhoneTheme {
                 var isDefault by remember { mutableStateOf(dialerRole.isDefault) }
@@ -59,10 +73,17 @@ class MainActivity : ComponentActivity() {
                     requestPermissions()
                     isDefault = dialerRole.isDefault
                 }
-                HomePlaceholder(
-                    isDefault = isDefault,
-                    onRequestRole = { dialerRole.requestIntent()?.let(roleLauncher::launch) },
-                )
+                if (isDefault) {
+                    HomeScreen(
+                        initialNumber = prefill,
+                        onPlaceCall = { callPlacer.placeCall(it) },
+                    )
+                } else {
+                    HomePlaceholder(
+                        isDefault = false,
+                        onRequestRole = { dialerRole.requestIntent()?.let(roleLauncher::launch) },
+                    )
+                }
             }
         }
     }

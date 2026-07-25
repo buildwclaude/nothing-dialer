@@ -40,30 +40,32 @@ data class Palette(
     val Divider: Color,
 )
 
-val LightPalette = Palette(
-    Accent = Color(0xFF2F80ED),
-    Positive = Color(0xFF27AE60),
-    Negative = Color(0xFFEB5757),
-    TextPrimary = Color(0xFF1B1A57),
-    TextSecondary = Color(0xFF4F5E7B),
-    Muted = Color(0xFFA1A1BC),
-    Surface = Color(0xFFFFFFFF),
-    SurfaceSubtle = Color(0xFFF7F7F7),
-    KeyBg = Color(0xFFF2F4F8),
-    Divider = Color(0xFFEDEDED),
+// Exact iOS tokens from the "Simple Dialer (Config2023)" Figma design.
+val DarkPalette = Palette(
+    Accent = Color(0xFF0A84FF),        // Default/SystemBlue/Dark
+    Positive = Color(0xFF30D158),      // Default/SystemGreen/Dark (call button)
+    Negative = Color(0xFFFF453A),      // iOS system red (dark)
+    TextPrimary = Color(0xFFFFFFFF),   // Label/Dark/Primary
+    TextSecondary = Color(0xFFEBEBF5), // Label/Dark/Secondary
+    Muted = Color(0xFF8E8E93),         // inactive tab / letters
+    Surface = Color(0xFF000000),       // System Background/Dark Base
+    SurfaceSubtle = Color(0xFF1C1C1E),
+    KeyBg = Color(0xFF2C2C2E),         // System Background/Dark Elevated/Secondary
+    Divider = Color(0xFF38383A),
 )
 
-val DarkPalette = Palette(
-    Accent = Color(0xFF3D8BF2),
-    Positive = Color(0xFF34C77B),
-    Negative = Color(0xFFFF6B6B),
-    TextPrimary = Color(0xFFF2F2F8),
-    TextSecondary = Color(0xFF9C9CB2),
-    Muted = Color(0xFF8A8AA0),
-    Surface = Color(0xFF101014),
-    SurfaceSubtle = Color(0xFF1A1A20),
-    KeyBg = Color(0xFF1E1E26),
-    Divider = Color(0xFF26262E),
+// iOS light-mode equivalents (the design is dark; this keeps light mode faithful).
+val LightPalette = Palette(
+    Accent = Color(0xFF007AFF),
+    Positive = Color(0xFF34C759),
+    Negative = Color(0xFFFF3B30),
+    TextPrimary = Color(0xFF000000),
+    TextSecondary = Color(0xFF3C3C43),
+    Muted = Color(0xFF8E8E93),
+    Surface = Color(0xFFFFFFFF),
+    SurfaceSubtle = Color(0xFFF2F2F7),
+    KeyBg = Color(0xFFE5E5EA),
+    Divider = Color(0xFFD1D1D6),
 )
 
 val LocalPalette = staticCompositionLocalOf { LightPalette }
