@@ -56,9 +56,15 @@ fun KeypadScreen(
     ) {
         Spacer(Modifier.weight(1f))
 
-        // Dialed number display.
+        // Dialed number display — large, shrinks as the number gets longer.
+        val numberFont = when {
+            number.length <= 11 -> 44.sp
+            number.length <= 15 -> 34.sp
+            number.length <= 20 -> 26.sp
+            else -> 20.sp
+        }
         Box(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(52.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(60.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -66,12 +72,12 @@ fun KeypadScreen(
                 color = palette.TextPrimary,
                 fontFamily = FontFamily.Default,
                 fontWeight = FontWeight.Normal,
-                fontSize = 36.sp,
+                fontSize = numberFont,
                 maxLines = 1,
                 textAlign = TextAlign.Center,
             )
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(10.dp))
 
         // 3 × 4 key grid.
         Column(
@@ -105,7 +111,7 @@ fun KeypadScreen(
                 Icon(
                     painterResource(R.drawable.ic_phone_call),
                     contentDescription = "Call",
-                    tint = Color.White,
+                    tint = palette.Surface, // black glyph on the white call button
                     modifier = Modifier.size(32.dp),
                 )
             }

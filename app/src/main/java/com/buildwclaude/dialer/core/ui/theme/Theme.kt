@@ -40,18 +40,19 @@ data class Palette(
     val Divider: Color,
 )
 
-// Exact iOS tokens from the "Simple Dialer (Config2023)" Figma design.
+// Monochrome dark aesthetic (black/white). Layout keeps the Figma dialer's
+// structure; the accent is white instead of iOS blue/green.
 val DarkPalette = Palette(
-    Accent = Color(0xFF0A84FF),        // Default/SystemBlue/Dark
-    Positive = Color(0xFF30D158),      // Default/SystemGreen/Dark (call button)
-    Negative = Color(0xFFFF453A),      // iOS system red (dark)
-    TextPrimary = Color(0xFFFFFFFF),   // Label/Dark/Primary
-    TextSecondary = Color(0xFFEBEBF5), // Label/Dark/Secondary
-    Muted = Color(0xFF8E8E93),         // inactive tab / letters
-    Surface = Color(0xFF000000),       // System Background/Dark Base
-    SurfaceSubtle = Color(0xFF1C1C1E),
-    KeyBg = Color(0xFF2C2C2E),         // System Background/Dark Elevated/Secondary
-    Divider = Color(0xFF38383A),
+    Accent = Color(0xFFFFFFFF),        // selected tab, highlights, call button
+    Positive = Color(0xFFFFFFFF),      // call button background (icon is black)
+    Negative = Color(0xFFFF453A),      // reserved for end/decline in the call screen
+    TextPrimary = Color(0xFFFFFFFF),
+    TextSecondary = Color(0xFFB0B0B5),
+    Muted = Color(0xFF8E8E93),         // inactive tabs / letters
+    Surface = Color(0xFF000000),
+    SurfaceSubtle = Color(0xFF121212),
+    KeyBg = Color(0xFF2A2A2A),         // dial keys / list press
+    Divider = Color(0xFF2A2A2A),
 )
 
 // iOS light-mode equivalents (the design is dark; this keeps light mode faithful).
@@ -103,11 +104,11 @@ private val Shapes = Shapes(
 
 @Composable
 fun PhoneTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val p = if (darkTheme) DarkPalette else LightPalette
-    val scheme = (if (darkTheme) darkColorScheme() else lightColorScheme()).copy(
+    // Dark aesthetic: always dark, regardless of the system setting.
+    val p = DarkPalette
+    val scheme = darkColorScheme().copy(
         primary = p.Accent,
         background = p.Surface,
         surface = p.Surface,

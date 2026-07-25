@@ -33,7 +33,10 @@ import androidx.compose.ui.unit.sp
 import com.buildwclaude.dialer.R
 import com.buildwclaude.dialer.core.ui.theme.DesignType
 import com.buildwclaude.dialer.core.ui.theme.palette
+import com.buildwclaude.dialer.ui.contacts.ContactsScreen
+import com.buildwclaude.dialer.ui.favorites.FavoritesScreen
 import com.buildwclaude.dialer.ui.keypad.KeypadScreen
+import com.buildwclaude.dialer.ui.recents.RecentsScreen
 
 enum class DialerTab(val label: String, val icon: Int) {
     FAVORITES("Favorites", R.drawable.ic_tab_favorites),
@@ -62,7 +65,10 @@ fun HomeScreen(
         ) {
             when (tab) {
                 DialerTab.KEYPAD -> KeypadScreen(initialNumber = initialNumber, onPlaceCall = onPlaceCall)
-                else -> ComingSoon(tab)
+                DialerTab.RECENTS -> RecentsScreen(onPlaceCall = onPlaceCall)
+                DialerTab.CONTACTS -> ContactsScreen(onPlaceCall = onPlaceCall)
+                DialerTab.FAVORITES -> FavoritesScreen(onPlaceCall = onPlaceCall)
+                DialerTab.VOICEMAIL -> ComingSoon(tab)
             }
         }
     }
