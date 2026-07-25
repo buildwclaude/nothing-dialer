@@ -1,6 +1,7 @@
 package com.buildwclaude.dialer.ui.contacts
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -16,16 +17,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -163,14 +169,17 @@ private fun ContactRow(contact: Contact, onClick: () -> Unit) {
     }
 }
 
-/** Minimal vertical A–Z index pinned to the right edge; drag to jump. */
+/**
+ * A–Z index as a floating "HSUI dock" — a frosted rounded-pill capsule hugging
+ * the right edge. Drag along it to jump; the active letter lights up.
+ */
 @Composable
 private fun AlphabetIndex(
     letters: List<Char>,
     modifier: Modifier = Modifier,
     onLetter: (Char) -> Unit,
 ) {
-    var height by remember { mutableStateOf(1) }
+    var height by remember { mutableIntStateOf(1) }
     var active by remember { mutableStateOf<Char?>(null) }
 
     fun pick(y: Float) {
@@ -182,29 +191,39 @@ private fun AlphabetIndex(
         }
     }
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxHeight()
-            .width(22.dp)
-            .padding(vertical = 8.dp)
-            .pointerInput(letters) {
-                height = size.height
-                detectVerticalDragGestures(
-                    onDragStart = { pick(it.y) },
-                    onDragEnd = { active = null },
-                    onDragCancel = { active = null },
-                ) { change, _ -> pick(change.position.y) }
-            },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly,
+            .padding(vertical = 48.dp, end = 6.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        letters.forEach { ch ->
-            Text(
-                ch.toString(),
-                color = if (ch == active) palette.TextPrimary else palette.Muted,
-                fontSize = 11.sp,
-                fontWeight = if (ch == active) FontWeight.Bold else FontWeight.Medium,
-            )
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(percent = 50))
+                .background(Color.White.copy(alpha = if (active != null) 0.14f else 0.07f))
+                .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(percent = 50))
+                .padding(horizontal = 5.dp, vertical = 12.dp)
+                .onSizeChanged { height = it.height }
+                .pointerInput(letters) {
+                    detectVerticalDragGestures(
+                        onDragStart = { pick(it.y) },
+                        onDragEnd = { active = null },
+                        onDragCancel = { active = null },
+                    ) { change, _ -> pick(change.position.y) }
+                },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            letters.forEach { ch ->
+                val on = ch == active
+                Text(
+                    ch.toString(),
+                    color = if (on) palette.TextPrimary else palette.Muted,
+                    fontSize = if (on) 13.sp else 11.sp,
+                    fontWeight = if (on) FontWeight.Bold else FontWeight.Medium,
+                )
+            }
         }
     }
 }
