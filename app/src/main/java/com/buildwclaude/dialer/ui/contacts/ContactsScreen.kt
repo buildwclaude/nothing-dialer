@@ -194,7 +194,7 @@ private fun AlphabetIndex(
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .padding(vertical = 48.dp, end = 6.dp),
+            .padding(top = 48.dp, bottom = 48.dp, end = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(
