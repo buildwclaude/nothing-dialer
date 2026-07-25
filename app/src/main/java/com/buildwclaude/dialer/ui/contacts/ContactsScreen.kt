@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -192,18 +194,38 @@ private fun AlphabetIndex(
     }
 
     Box(
-        modifier = modifier
-            .fillMaxHeight()
-            .padding(top = 48.dp, bottom = 48.dp, end = 6.dp),
+        modifier = modifier.fillMaxHeight().padding(end = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
+        // Big letter bubble that appears left of the dock while dragging.
+        if (active != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(end = 52.dp)
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color(0xFF2A2A2A))
+                    .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(20.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    active.toString(),
+                    color = palette.TextPrimary,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+
+        // The dock: a solid, clearly-visible rounded-pill capsule.
         Column(
             modifier = Modifier
-                .fillMaxHeight()
+                .wrapContentHeight()
                 .clip(RoundedCornerShape(percent = 50))
-                .background(Color.White.copy(alpha = if (active != null) 0.14f else 0.07f))
-                .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(percent = 50))
-                .padding(horizontal = 5.dp, vertical = 12.dp)
+                .background(if (active != null) Color(0xFF3A3A3A) else Color(0xFF262626))
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(percent = 50))
+                .padding(horizontal = 6.dp, vertical = 12.dp)
                 .onSizeChanged { height = it.height }
                 .pointerInput(letters) {
                     detectVerticalDragGestures(
@@ -213,14 +235,14 @@ private fun AlphabetIndex(
                     ) { change, _ -> pick(change.position.y) }
                 },
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceEvenly,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             letters.forEach { ch ->
                 val on = ch == active
                 Text(
                     ch.toString(),
                     color = if (on) palette.TextPrimary else palette.Muted,
-                    fontSize = if (on) 13.sp else 11.sp,
+                    fontSize = if (on) 12.sp else 10.sp,
                     fontWeight = if (on) FontWeight.Bold else FontWeight.Medium,
                 )
             }
