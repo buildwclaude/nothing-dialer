@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Phone</string>
+    <string name="call_channel">Ongoing calls</string>
+    <string name="incoming_channel">Incoming calls</string>
+</resources>
