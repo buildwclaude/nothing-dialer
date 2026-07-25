@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+
 package com.buildwclaude.dialer.core.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
