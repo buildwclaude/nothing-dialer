@@ -1,7 +1,9 @@
 package com.buildwclaude.dialer.ui.keypad
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,6 +45,7 @@ private val KEYS = listOf(
     Key("*"), Key("0", "+"), Key("#"),
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun KeypadScreen(
     initialNumber: String = "",
@@ -120,10 +123,13 @@ fun KeypadScreen(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
                         .size(44.dp)
-                        .clickable(
+                        // Tap deletes one digit; long-press clears the whole number.
+                        .combinedClickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                        ) { number = number.dropLast(1) },
+                            onClick = { number = number.dropLast(1) },
+                            onLongClick = { number = "" },
+                        ),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(

@@ -16,6 +16,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Required to raise the incoming-call screen from the background on Android 10+ -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <!-- Hard privacy guarantee: strip network permissions even if a library tries
          to merge them in. This app cannot touch the internet. -->

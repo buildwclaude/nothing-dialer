@@ -1,6 +1,8 @@
 package com.buildwclaude.dialer.telecom
 
 import android.telecom.Call
+import android.telecom.CallAudioState
+import android.telecom.InCallService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -25,4 +27,41 @@ object CallRegistry {
     val primary: Call?
         get() = _calls.value.firstOrNull { it.details?.state == Call.STATE_RINGING }
             ?: _calls.value.lastOrNull()
+
+    // ----- Audio controls, routed through the bound InCallService -----
+
+    @Volatile
+    var service: InCallService? = null
+
+    private val _muted = MutableStateFlow(false)
+    val muted: StateFlow<Boolean> = _muted
+
+    private val _speakerOn = MutableStateFlow(false)
+    val speakerOn: StateFlow<Boolean> = _speakerOn
+
+    fun toggleMute() {
+        val next = !_muted.value
+        service?.setMuted(next)
+        _muted.value = next
+    }
+
+    fun toggleSpeaker() {
+        val next = !_speakerOn.value
+        service?.setAudioRoute(
+            if (next) CallAudioState.ROUTE_SPEAKER else CallAudioState.ROUTE_EARPIECE,
+        )
+        _speakerOn.value = next
+    }
+
+    /** Called by the service when the framework reports the real audio state. */
+    fun onAudioStateChanged(state: CallAudioState?) {
+        state ?: return
+        _muted.value = state.isMuted
+        _speakerOn.value = state.route == CallAudioState.ROUTE_SPEAKER
+    }
+
+    fun reset() {
+        _muted.value = false
+        _speakerOn.value = false
+    }
 }
