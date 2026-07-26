@@ -60,4 +60,16 @@ class CallLogRepository @Inject constructor(
         }
         out
     }
+
+    /** Deletes call-log entries by id. Requires WRITE_CALL_LOG. */
+    suspend fun delete(ids: Collection<Long>): Int = withContext(Dispatchers.IO) {
+        if (ids.isEmpty()) return@withContext 0
+        runCatching {
+            context.contentResolver.delete(
+                CallLog.Calls.CONTENT_URI,
+                "${CallLog.Calls._ID} IN (${ids.joinToString(",")})",
+                null,
+            )
+        }.getOrDefault(0)
+    }
 }

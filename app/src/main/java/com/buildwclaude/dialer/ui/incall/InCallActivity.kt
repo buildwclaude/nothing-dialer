@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.buildwclaude.dialer.R
+import com.buildwclaude.dialer.core.ui.AuroraBackground
 import com.buildwclaude.dialer.core.ui.MonoAvatar
 import com.buildwclaude.dialer.core.ui.theme.DesignType
 import com.buildwclaude.dialer.core.ui.theme.PhoneTheme
@@ -107,10 +108,10 @@ private fun CallScreen(onFinish: () -> Unit) {
     val name = CallNotifier.callerLabel(call)
     var showKeypad by remember { mutableStateOf(false) }
 
+    AuroraBackground(intense = ringing || state == Call.STATE_DIALING) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(palette.Surface)
             .statusBarsPadding()
             .padding(horizontal = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -212,6 +213,7 @@ private fun CallScreen(onFinish: () -> Unit) {
                 GridCell(Modifier.weight(1f)) {}
             }
         }
+    }
     }
 }
 

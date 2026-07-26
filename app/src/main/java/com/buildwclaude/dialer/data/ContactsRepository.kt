@@ -31,6 +31,7 @@ class ContactsRepository @Inject constructor(
                     ContactsContract.CommonDataKinds.Phone.NUMBER,
                     ContactsContract.CommonDataKinds.Phone.PHOTO_URI,
                     ContactsContract.CommonDataKinds.Phone.STARRED,
+                    ContactsContract.CommonDataKinds.Phone.LOOKUP_KEY,
                 ),
                 "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} IS NOT NULL",
                 null,
@@ -46,6 +47,7 @@ class ContactsRepository @Inject constructor(
                         number = c.getString(2) ?: "",
                         photoUri = c.getString(3),
                         starred = c.getInt(4) == 1,
+                        lookupKey = c.getString(5),
                     )
                 }
             }
@@ -54,4 +56,24 @@ class ContactsRepository @Inject constructor(
     }
 
     suspend fun favorites(): List<Contact> = contacts().filter { it.starred }
+
+    /** Deletes whole contacts by lookup key. Requires WRITE_CONTACTS. */
+    suspend fun delete(contacts: List<Contact>): Int = withContext(Dispatchers.IO) {
+        var deleted = 0
+        for (c in contacts) {
+            val key = c.lookupKey ?: continue
+            runCatching {
+                val uri = android.net.Uri.withAppendedPath(
+                    ContactsContract.Contacts.CONTENT_LOOKUP_URI, key,
+                )
+                deleted += context.contentResolver.delete(uri, null, null)
+            }
+        }
+        deleted
+    }
+
+    fun contactUri(contact: Contact): android.net.Uri? {
+        val key = contact.lookupKey ?: return null
+        return android.net.Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, key)
+    }
 }

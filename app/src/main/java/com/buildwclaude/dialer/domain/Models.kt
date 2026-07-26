@@ -20,6 +20,7 @@ data class Contact(
     val number: String,
     val photoUri: String?,
     val starred: Boolean,
+    val lookupKey: String? = null,
 ) {
     /** First letter for the A–Z index; non-letters bucket under '#'. */
     val sortLetter: Char

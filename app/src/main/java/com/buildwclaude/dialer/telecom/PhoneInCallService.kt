@@ -29,17 +29,19 @@ class PhoneInCallService : InCallService() {
         call.registerCallback(callback)
 
         if (call.details?.state == Call.STATE_RINGING) {
-            // Ringing: the full-screen intent raises the call screen (and shows a
-            // heads-up banner if the phone is unlocked and in use).
             CallNotifier.showIncoming(this, call)
         } else {
             CallNotifier.showOngoing(this, call)
-            runCatching {
-                startActivity(
-                    Intent(this, InCallActivity::class.java)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                )
-            }
+        }
+        // Telecom grants the bound InCallService a background-activity-launch
+        // exemption for the duration of a call, so open the call screen directly
+        // as well — the full-screen intent alone only fires when the device is
+        // locked/idle, which is why incoming calls showed just a notification.
+        runCatching {
+            startActivity(
+                Intent(this, InCallActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            )
         }
     }
 

@@ -1,5 +1,6 @@
 package com.buildwclaude.dialer.ui.keypad
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +54,7 @@ fun KeypadScreen(
     onPlaceCall: (String) -> Unit,
 ) {
     var number by remember { mutableStateOf(initialNumber) }
+    val view = LocalView.current
 
     Column(
         modifier = Modifier.fillMaxSize().background(palette.Surface),
@@ -93,7 +96,10 @@ fun KeypadScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     rowKeys.forEach { key ->
-                        DialKey(key, Modifier.weight(1f)) { number += key.digit }
+                        DialKey(key, Modifier.weight(1f)) {
+                            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                            number += key.digit
+                        }
                     }
                 }
             }
@@ -108,7 +114,12 @@ fun KeypadScreen(
                     .size(74.dp)
                     .clip(CircleShape)
                     .background(palette.Positive)
-                    .clickable { if (number.isNotEmpty()) onPlaceCall(number) },
+                    .clickable {
+                        if (number.isNotEmpty()) {
+                            view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                            onPlaceCall(number)
+                        }
+                    },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -127,8 +138,14 @@ fun KeypadScreen(
                         .combinedClickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = { number = number.dropLast(1) },
-                            onLongClick = { number = "" },
+                            onClick = {
+                                view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                                number = number.dropLast(1)
+                            },
+                            onLongClick = {
+                                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                number = ""
+                            },
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
