@@ -1,39 +1,27 @@
 package com.buildwclaude.dialer.ui.contacts
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,7 +39,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 @HiltViewModel
 class ContactsViewModel @Inject constructor(
@@ -87,16 +74,17 @@ fun ContactsScreen(
         }
         list
     }
-    // letter -> row index, for the A–Z fast scroller.
+    // letter -> row index of its header, for the wheel's list jumps.
     val letterIndex = remember(rows) {
         buildMap {
             rows.forEachIndexed { i, r -> if (r is Row.Header) putIfAbsent(r.letter, i) }
         }
     }
-    val presentLetters = remember(letterIndex) { ('A'..'Z').filter { it in letterIndex } + '#'.takeIf { '#' in letterIndex }.let { if (it != null) listOf(it) else emptyList() } }
+    // Full A–Z (+ '#') so empty letters render dimmed and are skipped, per spec.
+    val wheelLetters = remember { ('A'..'Z').toList() + '#' }
+    val counts = remember(contacts) { contacts.groupingBy { it.sortLetter }.eachCount() }
 
     val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
 
     Box(Modifier.fillMaxSize().background(palette.Surface)) {
         Column(Modifier.fillMaxSize()) {
@@ -138,13 +126,12 @@ fun ContactsScreen(
             }
         }
 
-        if (presentLetters.isNotEmpty()) {
-            AlphabetIndex(
-                letters = presentLetters,
-                modifier = Modifier.align(Alignment.CenterEnd),
-                onLetter = { letter ->
-                    letterIndex[letter]?.let { idx -> scope.launch { listState.scrollToItem(idx) } }
-                },
+        if (contacts.isNotEmpty()) {
+            EdgeAlphabetWheel(
+                letters = wheelLetters,
+                counts = counts,
+                listState = listState,
+                sectionIndex = { letter -> letterIndex[letter] },
             )
         }
     }
@@ -168,84 +155,5 @@ private fun ContactRow(contact: Contact, onClick: () -> Unit) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-    }
-}
-
-/**
- * A–Z index as a floating "HSUI dock" — a frosted rounded-pill capsule hugging
- * the right edge. Drag along it to jump; the active letter lights up.
- */
-@Composable
-private fun AlphabetIndex(
-    letters: List<Char>,
-    modifier: Modifier = Modifier,
-    onLetter: (Char) -> Unit,
-) {
-    var height by remember { mutableIntStateOf(1) }
-    var active by remember { mutableStateOf<Char?>(null) }
-
-    fun pick(y: Float) {
-        val idx = ((y / height) * letters.size).toInt().coerceIn(0, letters.size - 1)
-        val letter = letters[idx]
-        if (letter != active) {
-            active = letter
-            onLetter(letter)
-        }
-    }
-
-    Box(
-        modifier = modifier.fillMaxHeight().padding(end = 10.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        // Big letter bubble that appears left of the dock while dragging.
-        if (active != null) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(end = 52.dp)
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFF2A2A2A))
-                    .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(20.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    active.toString(),
-                    color = palette.TextPrimary,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-
-        // The dock: a solid, clearly-visible rounded-pill capsule.
-        Column(
-            modifier = Modifier
-                .wrapContentHeight()
-                .clip(RoundedCornerShape(percent = 50))
-                .background(if (active != null) Color(0xFF3A3A3A) else Color(0xFF262626))
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(percent = 50))
-                .padding(horizontal = 6.dp, vertical = 12.dp)
-                .onSizeChanged { height = it.height }
-                .pointerInput(letters) {
-                    detectVerticalDragGestures(
-                        onDragStart = { pick(it.y) },
-                        onDragEnd = { active = null },
-                        onDragCancel = { active = null },
-                    ) { change, _ -> pick(change.position.y) }
-                },
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            letters.forEach { ch ->
-                val on = ch == active
-                Text(
-                    ch.toString(),
-                    color = if (on) palette.TextPrimary else palette.Muted,
-                    fontSize = if (on) 12.sp else 10.sp,
-                    fontWeight = if (on) FontWeight.Bold else FontWeight.Medium,
-                )
-            }
-        }
     }
 }
