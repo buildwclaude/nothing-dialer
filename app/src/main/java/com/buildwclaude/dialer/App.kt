@@ -22,7 +22,13 @@ class App : Application() {
                 CHANNEL_INCOMING,
                 getString(R.string.incoming_channel),
                 NotificationManager.IMPORTANCE_HIGH,
-            ).apply { setBypassDnd(true) },
+            ).apply {
+                setBypassDnd(true)
+                // Telecom plays the real phone ringtone; silence the
+                // notification's own sound so they don't double up.
+                setSound(null, null)
+                enableVibration(false)
+            },
         )
     }
 

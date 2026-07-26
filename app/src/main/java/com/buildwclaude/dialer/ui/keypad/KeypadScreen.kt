@@ -173,21 +173,35 @@ private fun DialKey(key: Key, modifier: Modifier, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        // Fixed slots: every key reserves the same digit height and the same
+        // letters strip, so digits sit at one consistent height whether or not
+        // the key has letters (1, * and # used to float out of centre).
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(top = 6.dp),
+        ) {
             Text(
                 text = key.digit,
                 color = palette.TextPrimary,
                 fontWeight = FontWeight.Normal,
-                fontSize = 34.sp,
+                fontSize = 32.sp,
+                lineHeight = 34.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.height(34.dp),
             )
-            if (key.letters.isNotEmpty()) {
-                Text(
-                    text = key.letters,
-                    color = palette.TextPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 9.sp,
-                    letterSpacing = 1.sp,
-                )
+            Box(Modifier.height(12.dp), contentAlignment = Alignment.TopCenter) {
+                if (key.letters.isNotEmpty()) {
+                    Text(
+                        text = key.letters,
+                        color = palette.TextSecondary,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 9.sp,
+                        lineHeight = 10.sp,
+                        letterSpacing = 1.sp,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         }
     }

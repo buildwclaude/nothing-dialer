@@ -65,10 +65,18 @@ class InCallActivity : ComponentActivity() {
         }
         setContent { PhoneTheme { CallScreen(onFinish = { finishAndRemoveTask() }) } }
     }
+
+    override fun onResume() {
+        super.onResume()
+        // The call screen is on top, so demote the incoming notification to the
+        // silent ongoing one — otherwise its heads-up banner floats over us.
+        CallRegistry.primary?.let { CallNotifier.showOngoing(this, it) }
+    }
 }
 
 @Composable
 private fun CallScreen(onFinish: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val calls by CallRegistry.calls.collectAsStateWithLifecycle()
     val muted by CallRegistry.muted.collectAsStateWithLifecycle()
     val speakerOn by CallRegistry.speakerOn.collectAsStateWithLifecycle()
@@ -177,13 +185,59 @@ private fun CallScreen(onFinish: () -> Unit) {
                         ) { if (onHold) call.unhold() else call.hold() }
                     }
                     GridCell(Modifier.weight(1f)) {
-                        ControlButton(R.drawable.ic_add_call, "Add") { /* multi-call comes later */ }
+                        ControlButton(R.drawable.ic_add_call, "Add") {
+                            runCatching {
+                                context.startActivity(
+                                    android.content.Intent(android.content.Intent.ACTION_DIAL),
+                                )
+                            }
+                        }
                     }
-                    // Empty third cell keeps the columns aligned with the row above.
-                    GridCell(Modifier.weight(1f)) {}
+                    GridCell(Modifier.weight(1f)) {
+                        ControlButton(R.drawable.ic_message, "Message") {
+                            runCatching {
+                                context.startActivity(
+                                    android.content.Intent(
+                                        android.content.Intent.ACTION_SENDTO,
+                                        android.net.Uri.parse("smsto:" + (call.details?.handle?.schemeSpecificPart ?: "")),
+                                    ),
+                                )
+                            }
+                        }
+                    }
                 }
             }
             Spacer(Modifier.height(32.dp))
+        }
+
+        if (ringing) {
+            // Quick actions that make sense before answering.
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(bottom = 28.dp),
+            ) {
+                GridCell(Modifier.weight(1f)) {
+                    ControlButton(R.drawable.ic_message, "Message") {
+                        runCatching {
+                            context.startActivity(
+                                android.content.Intent(
+                                    android.content.Intent.ACTION_SENDTO,
+                                    android.net.Uri.parse("smsto:" + (call.details?.handle?.schemeSpecificPart ?: "")),
+                                ),
+                            )
+                        }
+                    }
+                }
+                GridCell(Modifier.weight(1f)) {
+                    ControlButton(R.drawable.ic_bell_off, "Silence") {
+                        CallRegistry.service?.setMuted(true)
+                    }
+                }
+                GridCell(Modifier.weight(1f)) {
+                    ControlButton(R.drawable.ic_speaker, "Speaker", active = speakerOn) {
+                        CallRegistry.toggleSpeaker()
+                    }
+                }
+            }
         }
 
         // Answer / decline while ringing; single end button once connected.
@@ -193,7 +247,7 @@ private fun CallScreen(onFinish: () -> Unit) {
         ) {
             if (ringing) {
                 GridCell(Modifier.weight(1f)) {
-                    BigAction(R.drawable.ic_call_end, "Decline", palette.Negative, rotate = true) {
+                    BigAction(R.drawable.ic_call_end, "Decline", palette.Negative) {
                         call.reject(false, null); onFinish()
                     }
                 }
@@ -206,7 +260,7 @@ private fun CallScreen(onFinish: () -> Unit) {
             } else {
                 GridCell(Modifier.weight(1f)) {}
                 GridCell(Modifier.weight(1f)) {
-                    BigAction(R.drawable.ic_call_end, "End", palette.Negative, rotate = true) {
+                    BigAction(R.drawable.ic_call_end, "End", palette.Negative) {
                         call.disconnect(); onFinish()
                     }
                 }
@@ -233,7 +287,7 @@ private fun ControlButton(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .size(64.dp)
+                .size(76.dp)
                 .clip(CircleShape)
                 .background(if (active) palette.TextPrimary else palette.KeyBg)
                 .clickable(onClick = onClick),
@@ -243,7 +297,7 @@ private fun ControlButton(
                 painterResource(icon),
                 contentDescription = label,
                 tint = if (active) palette.Surface else palette.TextPrimary,
-                modifier = Modifier.size(26.dp),
+                modifier = Modifier.size(32.dp),
             )
         }
         Spacer(Modifier.height(6.dp))
@@ -262,7 +316,7 @@ private fun BigAction(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .size(72.dp)
+                .size(80.dp)
                 .clip(CircleShape)
                 .background(color)
                 .clickable(onClick = onClick),
@@ -273,7 +327,7 @@ private fun BigAction(
                 contentDescription = label,
                 tint = Color.White,
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(36.dp)
                     .then(if (rotate) Modifier.rotate(135f) else Modifier),
             )
         }

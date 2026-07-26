@@ -1,5 +1,6 @@
 package com.buildwclaude.dialer.ui.recents
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -44,7 +44,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.buildwclaude.dialer.R
 import com.buildwclaude.dialer.core.ui.CallFormat
-import com.buildwclaude.dialer.core.ui.ContactActionSheet
 import com.buildwclaude.dialer.core.ui.MonoAvatar
 import com.buildwclaude.dialer.core.ui.theme.DesignType
 import com.buildwclaude.dialer.core.ui.theme.palette
@@ -63,6 +62,12 @@ class RecentsViewModel @Inject constructor(
     val calls = MutableStateFlow<List<RecentCall>>(emptyList())
     init { refresh() }
     fun refresh() = viewModelScope.launch { calls.value = repo.recentCalls() }
+    val history = MutableStateFlow<List<RecentCall>>(emptyList())
+
+    fun loadHistory(number: String) = viewModelScope.launch {
+        history.value = repo.historyFor(number)
+    }
+
     fun delete(ids: Set<Long>) = viewModelScope.launch {
         repo.delete(ids)
         calls.value = repo.recentCalls()
@@ -83,6 +88,11 @@ fun RecentsScreen(
     var sheetFor by remember { mutableStateOf<RecentCall?>(null) }
 
     fun exitSelection() { selecting = false; selected = emptySet() }
+
+    // Back leaves selection mode / closes the sheet instead of exiting the app.
+    BackHandler(enabled = selecting || sheetFor != null) {
+        if (sheetFor != null) sheetFor = null else exitSelection()
+    }
 
     Column(Modifier.fillMaxSize().background(palette.Surface)) {
         // Header doubles as the selection action bar.
@@ -154,7 +164,7 @@ fun RecentsScreen(
                         onToggle = {
                             selected = if (call.id in selected) selected - call.id else selected + call.id
                         },
-                        onOpen = { sheetFor = call },
+                        onOpen = { sheetFor = call; viewModel.loadHistory(call.number) },
                         onLongPress = {
                             if (!selecting) { selecting = true; selected = setOf(call.id) }
                         },
@@ -171,14 +181,13 @@ fun RecentsScreen(
     }
 
     sheetFor?.let { call ->
-        ContactActionSheet(
-            title = call.display,
-            number = call.number,
-            photoUri = call.photoUri,
-            subtitle = "${directionLabel(call.direction)} · ${CallFormat.time(context, call.date)}" +
-                (CallFormat.duration(call.durationSec).takeIf { it.isNotEmpty() }?.let { " · $it" } ?: ""),
+        val history by viewModel.history.collectAsStateWithLifecycle()
+        CallHistorySheet(
+            call = call,
+            history = history,
             onDismiss = { sheetFor = null },
             onCall = { sheetFor = null; onPlaceCall(call.number) },
+            onDelete = { ids -> viewModel.delete(ids) },
         )
     }
 }
@@ -240,24 +249,14 @@ private fun RecentRow(
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    directionLabel(call.direction),
+                    directionLabel(call.direction) + " · " + CallFormat.time(context, call.date),
                     fontSize = 12.sp,
                     color = palette.TextSecondary,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
-
-        // Timestamp is width-capped so a long date can never push the call
-        // button off the row (which is why it vanished further down the list).
-        Text(
-            CallFormat.time(context, call.date),
-            fontSize = 12.sp,
-            color = palette.Muted,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.widthIn(max = 84.dp).padding(end = 4.dp),
-        )
 
         if (!selecting) {
             // Only this button places the call — tapping the row opens actions.

@@ -95,6 +95,12 @@ object CallFormat {
         return DateUtils.formatDateTime(context, millis, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_ALL)
     }
 
+    fun fullDateTime(context: Context, millis: Long): String =
+        DateUtils.formatDateTime(
+            context, millis,
+            DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH,
+        )
+
     fun duration(sec: Int): String {
         if (sec <= 0) return ""
         val m = sec / 60

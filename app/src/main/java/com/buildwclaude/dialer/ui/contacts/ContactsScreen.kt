@@ -1,5 +1,6 @@
 package com.buildwclaude.dialer.ui.contacts
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -78,6 +79,11 @@ fun ContactsScreen(
     var selecting by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf(setOf<Long>()) }
     var sheetFor by remember { mutableStateOf<Contact?>(null) }
+
+    // Back leaves selection mode / closes the sheet instead of exiting the app.
+    BackHandler(enabled = selecting || sheetFor != null) {
+        if (sheetFor != null) sheetFor = null else { selecting = false; selected = emptySet() }
+    }
 
     val rows = remember(contacts) {
         val list = ArrayList<Row>()

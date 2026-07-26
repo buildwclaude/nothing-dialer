@@ -84,9 +84,13 @@
             android:permission="android.permission.BIND_INCALL_SERVICE"
             android:exported="true">
             <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" />
+            <!-- false = the system plays the ringtone chosen in
+                 Settings → Sound & vibration → Phone ringtone. When this was
+                 true, Telecom expected US to play it, so only the notification
+                 sound was heard. -->
             <meta-data
                 android:name="android.telecom.IN_CALL_SERVICE_RINGING"
-                android:value="true" />
+                android:value="false" />
             <intent-filter>
                 <action android:name="android.telecom.InCallService" />
             </intent-filter>

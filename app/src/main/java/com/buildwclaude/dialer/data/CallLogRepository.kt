@@ -61,6 +61,15 @@ class CallLogRepository @Inject constructor(
         out
     }
 
+    /** Every logged call with this number, newest first — the history view. */
+    suspend fun historyFor(number: String, limit: Int = 60): List<RecentCall> =
+        withContext(Dispatchers.IO) {
+            if (!canRead() || number.isBlank()) return@withContext emptyList()
+            recentCalls(limit = 1000)
+                .filter { android.telephony.PhoneNumberUtils.compare(it.number, number) }
+                .take(limit)
+        }
+
     /** Deletes call-log entries by id. Requires WRITE_CALL_LOG. */
     suspend fun delete(ids: Collection<Long>): Int = withContext(Dispatchers.IO) {
         if (ids.isEmpty()) return@withContext 0
