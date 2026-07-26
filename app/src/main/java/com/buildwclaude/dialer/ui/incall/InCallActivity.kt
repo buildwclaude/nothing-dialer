@@ -145,43 +145,80 @@ private fun CallScreen(onFinish: () -> Unit) {
             )
             Spacer(Modifier.height(16.dp))
         } else if (!ringing) {
-            // Control grid: mute / keypad / speaker, then hold / add.
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                ControlButton(R.drawable.ic_mic_off, "Mute", active = muted) { CallRegistry.toggleMute() }
-                ControlButton(R.drawable.ic_tab_keypad, "Keypad") { showKeypad = true }
-                ControlButton(R.drawable.ic_speaker, "Speaker", active = speakerOn) { CallRegistry.toggleSpeaker() }
-            }
-            Spacer(Modifier.height(20.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                val onHold = state == Call.STATE_HOLDING
-                ControlButton(R.drawable.ic_pause, if (onHold) "Resume" else "Hold", active = onHold) {
-                    if (onHold) call.unhold() else call.hold()
+            // Fixed 3-column grid so every button lines up in a true column,
+            // with equal gaps between rows and columns.
+            val onHold = state == Call.STATE_HOLDING
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                Row(Modifier.fillMaxWidth()) {
+                    GridCell(Modifier.weight(1f)) {
+                        ControlButton(R.drawable.ic_mic_off, "Mute", active = muted) {
+                            CallRegistry.toggleMute()
+                        }
+                    }
+                    GridCell(Modifier.weight(1f)) {
+                        ControlButton(R.drawable.ic_tab_keypad, "Keypad") { showKeypad = true }
+                    }
+                    GridCell(Modifier.weight(1f)) {
+                        ControlButton(R.drawable.ic_speaker, "Speaker", active = speakerOn) {
+                            CallRegistry.toggleSpeaker()
+                        }
+                    }
                 }
-                ControlButton(R.drawable.ic_add_call, "Add") { /* multi-call comes later */ }
-                Spacer(Modifier.size(64.dp)) // keeps the row balanced
+                Row(Modifier.fillMaxWidth()) {
+                    GridCell(Modifier.weight(1f)) {
+                        ControlButton(
+                            R.drawable.ic_pause,
+                            if (onHold) "Resume" else "Hold",
+                            active = onHold,
+                        ) { if (onHold) call.unhold() else call.hold() }
+                    }
+                    GridCell(Modifier.weight(1f)) {
+                        ControlButton(R.drawable.ic_add_call, "Add") { /* multi-call comes later */ }
+                    }
+                    // Empty third cell keeps the columns aligned with the row above.
+                    GridCell(Modifier.weight(1f)) {}
+                }
             }
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(32.dp))
         }
 
         // Answer / decline while ringing; single end button once connected.
+        // Uses the same 3-column geometry so the buttons sit under the grid columns.
         Row(
-            Modifier.fillMaxWidth().padding(bottom = 44.dp),
-            horizontalArrangement = if (ringing) Arrangement.SpaceEvenly else Arrangement.Center,
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 0.dp).padding(bottom = 48.dp),
         ) {
             if (ringing) {
-                BigAction(R.drawable.ic_call_end, "Decline", palette.Negative, rotate = true) {
-                    call.reject(false, null); onFinish()
+                GridCell(Modifier.weight(1f)) {
+                    BigAction(R.drawable.ic_call_end, "Decline", palette.Negative, rotate = true) {
+                        call.reject(false, null); onFinish()
+                    }
                 }
-                BigAction(R.drawable.ic_phone_call, "Answer", Color(0xFF30D158)) {
-                    call.answer(VideoProfile.STATE_AUDIO_ONLY)
+                GridCell(Modifier.weight(1f)) {}
+                GridCell(Modifier.weight(1f)) {
+                    BigAction(R.drawable.ic_phone_call, "Answer", Color(0xFF30D158)) {
+                        call.answer(VideoProfile.STATE_AUDIO_ONLY)
+                    }
                 }
             } else {
-                BigAction(R.drawable.ic_call_end, "End", palette.Negative, rotate = true) {
-                    call.disconnect(); onFinish()
+                GridCell(Modifier.weight(1f)) {}
+                GridCell(Modifier.weight(1f)) {
+                    BigAction(R.drawable.ic_call_end, "End", palette.Negative, rotate = true) {
+                        call.disconnect(); onFinish()
+                    }
                 }
+                GridCell(Modifier.weight(1f)) {}
             }
         }
     }
+}
+
+/** One cell of the control grid — centers its content in an equal-width column. */
+@Composable
+private fun GridCell(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Box(modifier, contentAlignment = Alignment.Center) { content() }
 }
 
 @Composable
@@ -246,22 +283,25 @@ private fun BigAction(
 @Composable
 private fun InCallKeypad(onDigit: (Char) -> Unit, onClose: () -> Unit) {
     val keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#")
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
         keys.chunked(3).forEach { row ->
-            Row(
-                Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
+            Row(Modifier.fillMaxWidth()) {
                 row.forEach { k ->
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(palette.KeyBg)
-                            .clickable { onDigit(k.first()) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(k, color = palette.TextPrimary, fontSize = 26.sp)
+                    GridCell(Modifier.weight(1f)) {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
+                                .background(palette.KeyBg)
+                                .clickable { onDigit(k.first()) },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(k, color = palette.TextPrimary, fontSize = 26.sp)
+                        }
                     }
                 }
             }
