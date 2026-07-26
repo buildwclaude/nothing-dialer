@@ -136,14 +136,14 @@ fun BoxScope.EdgeAlphabetWheel(
                 .graphicsLayer { scaleX = pop.value; scaleY = pop.value }
                 .shadow(3.dp, RoundedCornerShape(22.dp))
                 .clip(RoundedCornerShape(22.dp))
-                // Design fills the capsule with `surface`; in this monochrome
-                // dark app that reads as the white/black inverse.
-                .background(palette.TextPrimary),
+                // Spec: `surface` fill at elevation 3 — KeyBg is our elevated
+                // surface token, so it reads correctly in light and dark.
+                .background(palette.KeyBg),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 rounded.toString(),
-                color = palette.Surface,
+                color = palette.TextPrimary,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
             )

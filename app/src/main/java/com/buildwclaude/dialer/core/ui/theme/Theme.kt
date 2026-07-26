@@ -40,33 +40,32 @@ data class Palette(
     val Divider: Color,
 )
 
-// Monochrome dark aesthetic (black/white). Layout keeps the Figma dialer's
-// structure; the accent is white instead of iOS blue/green.
-val DarkPalette = Palette(
-    Accent = Color(0xFFFFFFFF),        // selected tab, highlights, call button
-    Positive = Color(0xFFFFFFFF),      // call button background (icon is black)
-    Negative = Color(0xFFFF453A),      // reserved for end/decline in the call screen
-    TextPrimary = Color(0xFFFFFFFF),
-    TextSecondary = Color(0xFFB0B0B5),
-    Muted = Color(0xFF8E8E93),         // inactive tabs / letters
-    Surface = Color(0xFF000000),
-    SurfaceSubtle = Color(0xFF121212),
-    KeyBg = Color(0xFF2A2A2A),         // dial keys / list press
-    Divider = Color(0xFF2A2A2A),
+// Shared with the Messages app so Phone and Messages read as one pair:
+// blue accent, navy text, light/dark following the system setting.
+val LightPalette = Palette(
+    Accent = Color(0xFF2F80ED),        // brand blue — tabs, highlights, actions
+    Positive = Color(0xFF27AE60),      // call / answer
+    Negative = Color(0xFFEB5757),      // end / decline
+    TextPrimary = Color(0xFF1B1A57),
+    TextSecondary = Color(0xFF4F5E7B),
+    Muted = Color(0xFFA1A1BC),
+    Surface = Color(0xFFFFFFFF),
+    SurfaceSubtle = Color(0xFFF8F9FC),
+    KeyBg = Color(0xFFF7F7F7),         // dial keys, elevated chips
+    Divider = Color(0xFFEDEDED),
 )
 
-// iOS light-mode equivalents (the design is dark; this keeps light mode faithful).
-val LightPalette = Palette(
-    Accent = Color(0xFF007AFF),
-    Positive = Color(0xFF34C759),
-    Negative = Color(0xFFFF3B30),
-    TextPrimary = Color(0xFF000000),
-    TextSecondary = Color(0xFF3C3C43),
-    Muted = Color(0xFF8E8E93),
-    Surface = Color(0xFFFFFFFF),
-    SurfaceSubtle = Color(0xFFF2F2F7),
-    KeyBg = Color(0xFFE5E5EA),
-    Divider = Color(0xFFD1D1D6),
+val DarkPalette = Palette(
+    Accent = Color(0xFF3D8BF2),
+    Positive = Color(0xFF34C77B),
+    Negative = Color(0xFFFF6B6B),
+    TextPrimary = Color(0xFFF2F2F8),
+    TextSecondary = Color(0xFF9C9CB2),
+    Muted = Color(0xFF8A8AA0),
+    Surface = Color(0xFF101014),
+    SurfaceSubtle = Color(0xFF17171D),
+    KeyBg = Color(0xFF1E1E26),
+    Divider = Color(0xFF26262E),
 )
 
 val LocalPalette = staticCompositionLocalOf { LightPalette }
@@ -104,11 +103,12 @@ private val Shapes = Shapes(
 
 @Composable
 fun PhoneTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    // Dark aesthetic: always dark, regardless of the system setting.
-    val p = DarkPalette
-    val scheme = darkColorScheme().copy(
+    // Follows the system light/dark setting, same as the Messages app.
+    val p = if (darkTheme) DarkPalette else LightPalette
+    val scheme = (if (darkTheme) darkColorScheme() else lightColorScheme()).copy(
         primary = p.Accent,
         background = p.Surface,
         surface = p.Surface,

@@ -114,7 +114,7 @@ fun KeypadScreen(
                 Icon(
                     painterResource(R.drawable.ic_phone_call),
                     contentDescription = "Call",
-                    tint = palette.Surface, // black glyph on the white call button
+                    tint = Color.White, // white glyph on the green call button
                     modifier = Modifier.size(32.dp),
                 )
             }

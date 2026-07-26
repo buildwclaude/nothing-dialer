@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -19,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.buildwclaude.dialer.core.ui.theme.palette
 import java.util.Calendar
+import kotlin.math.absoluteValue
 
 @Composable
 fun MonoAvatar(name: String?, photoUri: String?, size: Dp, modifier: Modifier = Modifier) {
@@ -30,19 +33,43 @@ fun MonoAvatar(name: String?, photoUri: String?, size: Dp, modifier: Modifier = 
             modifier = modifier.size(size).clip(CircleShape),
         )
     } else {
+        // iMessage-style gradient avatars, same set as the Messages app.
+        val (start, end) = AvatarGradients[
+            (name?.hashCode() ?: 0).absoluteValue % AvatarGradients.size,
+        ]
         Box(
             contentAlignment = Alignment.Center,
-            modifier = modifier.size(size).clip(CircleShape).background(palette.KeyBg),
+            modifier = modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(start, end),
+                        start = Offset.Zero,
+                        end = Offset.Infinite,
+                    ),
+                ),
         ) {
             Text(
                 text = initials(name),
-                color = palette.TextPrimary,
-                fontWeight = FontWeight.Medium,
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = (size.value * 0.38f).sp,
             )
         }
     }
 }
+
+private val AvatarGradients = listOf(
+    Color(0xFF56CCF2) to Color(0xFF2F80ED), // blue
+    Color(0xFFB06AB3) to Color(0xFF4568DC), // purple
+    Color(0xFFF093FB) to Color(0xFFF5576C), // pink
+    Color(0xFF43E97B) to Color(0xFF38B2A3), // green
+    Color(0xFFFDC830) to Color(0xFFF37335), // orange
+    Color(0xFF4FACFE) to Color(0xFF00C2FE), // cyan
+    Color(0xFFFF758C) to Color(0xFFFF7EB3), // rose
+    Color(0xFFA18CD1) to Color(0xFF6A5ACD), // violet
+)
 
 private fun initials(name: String?): String {
     val n = name?.trim().orEmpty()

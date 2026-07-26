@@ -198,7 +198,7 @@ private fun CallScreen(onFinish: () -> Unit) {
                 }
                 GridCell(Modifier.weight(1f)) {}
                 GridCell(Modifier.weight(1f)) {
-                    BigAction(R.drawable.ic_phone_call, "Answer", Color(0xFF30D158)) {
+                    BigAction(R.drawable.ic_phone_call, "Answer", palette.Positive) {
                         call.answer(VideoProfile.STATE_AUDIO_ONLY)
                     }
                 }
