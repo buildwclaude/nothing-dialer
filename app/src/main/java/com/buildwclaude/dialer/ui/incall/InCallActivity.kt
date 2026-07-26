@@ -68,9 +68,12 @@ class InCallActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // The call screen is on top, so demote the incoming notification to the
-        // silent ongoing one — otherwise its heads-up banner floats over us.
-        CallRegistry.primary?.let { CallNotifier.showOngoing(this, it) }
+        // Nothing is posted while ringing (the full-screen UI is the only
+        // surface); once connected, keep the silent ongoing notification so the
+        // call is reachable from the shade.
+        CallRegistry.primary
+            ?.takeIf { it.details?.state != Call.STATE_RINGING }
+            ?.let { CallNotifier.showOngoing(this, it) }
     }
 }
 
@@ -95,6 +98,14 @@ private fun CallScreen(onFinish: () -> Unit) {
         call.registerCallback(cb)
         state = call.details?.state ?: Call.STATE_NEW
         onDispose { call.unregisterCallback(cb) }
+    }
+
+    // Re-read the state whenever the screen comes back to the foreground, so a
+    // change that happened while we were backgrounded (answered from the shade,
+    // say) can't leave the controls showing the wrong set of buttons.
+    androidx.lifecycle.compose.LifecycleResumeEffect(call) {
+        state = call.details?.state ?: state
+        onPauseOrDispose { }
     }
 
     // Live call duration once connected.
@@ -208,36 +219,6 @@ private fun CallScreen(onFinish: () -> Unit) {
                 }
             }
             Spacer(Modifier.height(32.dp))
-        }
-
-        if (ringing) {
-            // Quick actions that make sense before answering.
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(bottom = 28.dp),
-            ) {
-                GridCell(Modifier.weight(1f)) {
-                    ControlButton(R.drawable.ic_message, "Message") {
-                        runCatching {
-                            context.startActivity(
-                                android.content.Intent(
-                                    android.content.Intent.ACTION_SENDTO,
-                                    android.net.Uri.parse("smsto:" + (call.details?.handle?.schemeSpecificPart ?: "")),
-                                ),
-                            )
-                        }
-                    }
-                }
-                GridCell(Modifier.weight(1f)) {
-                    ControlButton(R.drawable.ic_bell_off, "Silence") {
-                        CallRegistry.service?.setMuted(true)
-                    }
-                }
-                GridCell(Modifier.weight(1f)) {
-                    ControlButton(R.drawable.ic_speaker, "Speaker", active = speakerOn) {
-                        CallRegistry.toggleSpeaker()
-                    }
-                }
-            }
         }
 
         // Answer / decline while ringing; single end button once connected.

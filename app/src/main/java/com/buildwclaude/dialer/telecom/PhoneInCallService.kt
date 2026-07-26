@@ -28,20 +28,25 @@ class PhoneInCallService : InCallService() {
         CallRegistry.add(call)
         call.registerCallback(callback)
 
-        if (call.details?.state == Call.STATE_RINGING) {
-            CallNotifier.showIncoming(this, call)
-        } else {
-            CallNotifier.showOngoing(this, call)
-        }
+        val ringing = call.details?.state == Call.STATE_RINGING
+
         // Telecom grants the bound InCallService a background-activity-launch
-        // exemption for the duration of a call, so open the call screen directly
-        // as well — the full-screen intent alone only fires when the device is
-        // locked/idle, which is why incoming calls showed just a notification.
-        runCatching {
+        // exemption for the duration of a call, so we can open the call screen
+        // directly — including over the lock screen.
+        val launched = runCatching {
             startActivity(
                 Intent(this, InCallActivity::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             )
+        }.isSuccess
+
+        when {
+            // While ringing we deliberately post NO notification: a CallStyle
+            // incoming notification always shows a heads-up banner, which would
+            // float on top of the full-screen call UI. Only if the screen could
+            // not be launched do we fall back to the full-screen-intent one.
+            ringing && !launched -> CallNotifier.showIncoming(this, call)
+            !ringing -> CallNotifier.showOngoing(this, call)
         }
     }
 
